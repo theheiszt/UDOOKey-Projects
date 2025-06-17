@@ -1,20 +1,34 @@
 #!/bin/bash
 
-# Codex setup script for UDOOKey-Projects
-# Adds udoo-key-arduino as a submodule if not already present
+set -e
+trap 'echo "[ERROR] Setup failed. Aborting." >&2; exit 1' ERR
 
 SUBMODULE_DIR="udoo-key-arduino"
 SUBMODULE_URL="https://github.com/theheiszt/udoo-key-arduino.git"
 
-echo "[INFO] Setting up Codex environment..."
+green="\033[0;32m"
+yellow="\033[1;33m"
+reset="\033[0m"
 
-if [ -d "$SUBMODULE_DIR" ]; then
-    echo "[OK] '$SUBMODULE_DIR' already exists. Skipping clone."
-else
-    echo "[INFO] '$SUBMODULE_DIR' not found. Cloning as submodule..."
-    git submodule add "$SUBMODULE_URL" "$SUBMODULE_DIR"
-    echo "[INFO] Submodule added. Committing changes..."
-    git commit -am "Add udoo-key-arduino as a submodule"
+echo -e "${green}[INFO] Starting Codex environment setup...${reset}"
+
+# Check for Git
+if ! command -v git &> /dev/null; then
+    echo "[ERROR] Git is not installed. Please install Git first."
+    exit 1
 fi
 
-echo "[DONE] Codex environment is ready."
+# Check or add submodule
+if [ -d "$SUBMODULE_DIR" ]; then
+    echo -e "${yellow}[SKIP] '$SUBMODULE_DIR' already exists. Skipping clone.${reset}"
+else
+    echo "[INFO] '$SUBMODULE_DIR' not found. Adding as submodule..."
+    git submodule add "$SUBMODULE_URL" "$SUBMODULE_DIR"
+    git commit -am "Add $SUBMODULE_DIR as submodule"
+fi
+
+# Init/update submodules
+echo "[INFO] Initializing and updating submodules..."
+git submodule update --init --recursive
+
+echo -e "${green}[DONE] Codex environment is ready.${reset}"
